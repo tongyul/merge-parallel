@@ -1,0 +1,16 @@
+.DS_Store
+
+.vscode*
+.idea
+*.sublime-project
+*.sublime-workspace
+Session*.vim
+.vimrc
+
+.cm/
+
+# Plug in CMU 15210 lib/ folder. You can do this yourself (if you have access).
+lib/
+
+*.ignore
+*.ignore.*

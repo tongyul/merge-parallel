@@ -1,0 +1,47 @@
+merge (s1, s2) =
+
+  (* empty or disjoint inputs *)
+  if   |s1| = 0               then s2
+  elif |s2| = 0               then s1
+  elif s1[|s1| - 1] <= s2[0]  then s1 ++ s2
+  elif s2[|s2| - 1] <= s1[0]  then s2 ++ s1
+  else
+
+  (* if median of s1 is outside range of s2, we can always trim at least half
+   * of s1; the same applies to the median of s2. *)
+  let
+    m1 = |s1| div 2  (* median index of s1 *)
+    m2 = |s2| div 2  (* median index of s2 *)
+  in
+    if s1[m1] <= s2[0] then
+      s1[..(m1 + 1)] ++ merge (s1[(m1 + 1)..], s2)
+    elif s1[m1] >= s2[|s2| - 1] then
+      merge (s1[..m1], s2) ++ s1[m1..]
+    elif s2[m2] <= s1[0] then
+      s2[..(m2 + 1)] ++ merge (s1, s2[(m2 + 1)..])
+    elif s2[m2] >= s1[|s1| - 1] then
+      merge (s1, s2[..m2]) ++ s2[m2..]
+    else
+
+    (* we base the following on the observation that we may merge the left
+     * halves and right halves independently, then resolve the overlapping
+     * segments (with values between the two medians) again with merge.
+     * although the exact lengths of the overlap within s1 and s2 is unknown,
+     * it is upperbounded by the size of the half of s1 or s2 that it lies
+     * upon, and it doesn't change when independently merging the left and
+     * right halves. *)
+    let
+      (l, r) = (merge (s1[..m1], s2[..m2]) || merge (s1[m1..], s2[m2..]))
+      (* |l| = m1 + m2; |r| = |s1| + |s2| - m1 - m2 *)
+    in
+      if s1[m1] = s2[m2] then
+        (* no overlap *)
+        l ++ r
+      elif s1[m1] < s2[m2] then
+        (* up to m2 tail of l overlaps up to (|s1| - m1) head of r *)
+        l[..m1] ++ merge (l[m1..], r[..(|s1| - m1)]) ++ r[(|s1| - m1)..]
+      else  (* s1[m1] > s2[m2] *)
+        (* up to m1 tail of l overlaps up to (|s2| - m2) head of r *)
+        l[..m2] ++ merge (l[m2..], r[..(|s2| - m2)]) ++ r[(|s2| - m2)..]
+    end
+  end
