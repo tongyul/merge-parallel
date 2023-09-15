@@ -29,5 +29,5 @@ level $i$ would spend at most $O(\lg n)$ span partitioning, where $n=|s_1| +
 
 ## Third attempt -- to-do: documentation
 
-This one should have $O(\lg(|s_1|+|s_2|)$ span, but I don't know what's a tight
+This one should have $O(\lg(|s_1|+|s_2|))$ span, but I don't know what's a tight
 bound on work.
