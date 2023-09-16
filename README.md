@@ -3,31 +3,222 @@
 Attempt to come up with a merge function for merge-sort with very good work and
 span bounds, without looking at Google.
 
-## First attempt -- Parallel Merge With $O\left(\lg^2 n\right)$ Span
+## Preamble
 
-Given structure `O : ORDERED` and cmp-sorted sequences `s1, s2 : O.t seq`, take
-the right median [^rmed] of `s1`, call it `m`; partition [^par] `s1` by comparison
-against `m` into `l1, e1, r1`, and `s2` similarly into `l2, e2, s2`. Recurse
-with parallelism on `l2, l1` to obtain `l` and `r2, r1` to obtain `r`; flatten
-`<l, e1, e2, r>` for result. Base case: if `s1` is empty, return `s2`; no other
-rules.
+Following what is typical to divide-and-conquer, if the input is one sequence,
+we divide it into two halves, process the two halves, then recombine it.
 
-[^rmed]: By right median, I mean `nth s (length s div 2)`; it's easier to
-    calculate, that's all.
-[^par]: Using `filter`, the partition process will use $O(|s_1| + |s_2|)$ work
-    and $O(\lg(|s_1| + |s_2|))$ span; this can be improved by binary-searching
-    for boundary indices and then slicing, which gives $O(\lg(|s_1| + |s_2|))$
-    on both work and span.
+![](./illustrations/d-and-c-single-seq.png)
 
-Intuition of why this works: on every level, both `l1` and `r1` are at most as
-long as half of `s1`; every two levels down, the lengths of both inputs are
-halved. Therefore, there are at most $\lg\left(|s_1|\cdot|s_2|\right)$ levels;
-level $i$ would spend at most $O(\lg n)$ span partitioning, where $n=|s_1| +
-|s_2|$. This gives rise to a bound of $O\left(\lg^2 n\right)$ over span.
+Naturally, if we have two sequences, we might want to do something similar:
 
-## Second attempt -- to-do: documentation
+![](./illustrations/d-and-c-two-seq-naive.png)
 
-## Third attempt -- to-do: documentation
+However, consider the sequences $\langle 1,3,4,8 \rangle$ and $\langle 2,5,6,7
+\rangle$; the above algorithm would tell us to $\def\seq #1{\left\langle #1
+\right\rangle}\def\tup #1{\left( #1 \right)}\def\Merge {\mathrm{merge}}
+\Merge\tup{\seq{1,3},\seq{2,5}}$ and $\Merge\tup{\seq{4,8},\seq{6,7}}$, then
+concatenate the result. We concatenate $\seq{1,2,3,5}$ to $\seq{4,6,7,8}$ and
+get $\seq{1,2,3,{\color{red}5},{\color{red}4},6,7,8}$.
 
-This one should have $O(\lg(|s_1|+|s_2|))$ span, but I don't know what's a tight
-bound on work.
+In general, something like *this* may happen (in diagram, seq representations
+are aligned by value, not element number):
+
+![](./illustrations/d-and-c-naive-gone-bad.png)
+
+## Attempt 1: clean split
+
+As the section title suggests, we try to avoid the above scenario by always
+making clean splits that we know in advance would be safe for concatenation. We
+pick one sequence and split it by number of elements (i.e. at its median), then
+split the other sequence by *value* at the median we just computed.
+
+![](./illustrations/d-and-c-clean-split.png)
+
+The problem with this approach is that it takes time to find the position of a
+*value* in a sorted sequence. To be exact, we can do this in $O(\lg\def\size
+#1{\left\lvert #1 \right\rvert} \size s)$ by using binary search, or in the
+same span if we prefer to partition the sequence directly with $\def\Filter
+{\mathrm{filter}} \Filter$ (albeit incurring $O(\size s)$ work). Since at each
+level of recursion we can alternatingly split on the medians of either
+sequences, ensuring that its size is cut in half, we can achieve logarithmic
+levels of recursion. But still, the overall span would be $O\tup{\lg^2
+\tup{\size s + \size t}}$.
+
+## Attempt 2: repair the middle afterwards
+
+If the middle gets messed up, we can just do merge once more!
+
+![](./illustrations/d-and-c-with-repair-stage.png)
+
+The problem is, how do we know this will end at all??
+
+(We also cannot directly check the length of the overlapping middle, because
+that will require looking up index by value, which is again binary search and
+alone creates a span of $O(\lg \size s)$.)
+
+Here's a clever observation: the length of the "middle" in the above blue
+sequence is upperbounded by the length of its left half; the length of the
+"middle" of the red sequence is upperbounded by that of its right half. This
+means that when we do the repair, we can do it on a small region with at most
+half the size, then splice the result back into our answer.
+
+![](./illustrations/d-and-c-with-repair-stage-smart.png)
+
+This gives the following recurrence for the span:
+$$
+\def\Span{\mathcal S}\def\Work{\mathcal W} \Span\tup{\size s,\size t} =
+2\Span\tup{\size s / 2,\size t / 2} + O(1)
+$$
+Unfortunately, this solves to $\Span\tup{\size s,\size t}=O\tup{\size s+\size
+t}$. However, this is a great start! We have eliminated the dependency on
+binary search.
+
+## Attempt 3: repair the middle as we go
+
+Rather than saying the middle gets "messed up", we might as well say it hasn't
+been affected at all, since it is the overhang that is for sure greater than
+the max or less than the min of the other half-sequence. For this reason, we
+might as well (following our diagrams) perform the repair early by merging the
+left half of the blue sequence and the right half of the red sequence.
+
+![](./illustrations/d-and-c-with-parallel-repair-stage.png)
+
+This gives the following recurrence for span:
+$$
+\Span\tup{\size s,\size t} = \Span\tup{\size s / 2,\size t / 2} + O(1)
+$$
+which solves to $\Span\tup{\size s,\size t}=O\tup{\lg\tup{\size s+\size t}}$.
+
+The remaining problem here is work, which is given by *this* recurrence
+instead:
+$$
+\Work\tup{\size s,\size t} = 3\Work\tup{\size s / 2,\size t / 2} + O(1)
+$$
+which solves to $\Work\tup{\size s,\size t}=O\tup{\tup{\size s+\size
+t}^{\lg3}}$. Ideally, we don't want to do more work than a linear merge. This
+is a real bummer. However, I can give you some intuitions as to why
+$O\tup{\tup{\ldots}^{\lg3}}$ should be a very loose bound. (I don't have a
+proof yet for a better bound.)
+
+[How do I know where to split the
+chunks?](#how-do-i-know-where-to-split-the-chunks)
+
+(Literally press your browser back button to go back to what you were reading
+before hitting that internal link which brought you to this section.)
+
+### All edge cases are base cases
+
+What we have done in [Attempt 2](#attempt-2) and [Attempt 3](#attempt-3)
+assumes that the median of $s$ is between the min and max of $t$, and the
+median of $t$ is between the min and max of $s$. What do we do when this is not
+the case?
+
+It's actually simpler, because if you see an entire half of a sequence not
+overlapping with the other sequence by value, you can make it skip the process,
+like so:
+
+![](./illustrations/half-skip.png)
+
+It only gets simpler when the two sequences *themselves* don't touch at all.
+
+![](./illustrations/disjoint-skip.png)
+
+If one sequence is empty, then why bother!
+
+![](./illustrations/empty-skip.png)
+
+(please do handle the empty case
+first, as one of the sequences will not have a median, which is required for
+many other cases).
+
+### How do I know where to split the chunks
+
+Binary search is *not* an option, but we can let the recursion return and
+maintain the indices of sequence ends that get "hidden". This is the intuition
+I start with. And indeed, the "hidden" ends are easy to obtain from the base
+cases; they're also simple to maintain.
+
+There are, however, two concerns: [leakage](#leakage) and [ownership
+switch](#ownership-switch). Both follow from the fact that real sequences have
+"gaps" in between adjacent values.
+
+#### Leakage
+
+![](./illustrations/leakage.png)
+
+I can think of no super elegant way to prevent this. I *could* in theory add
+guard values or something, or I could just duplicate the pivot value, and
+discard the duplicated copy later.
+
+#### Ownership switch
+
+(Actually, I only realized this when debugging.)
+
+Ownership switch is a more extreme form of leakage; it happened to me because I
+was stingy and wouldn't duplicate a pivot that isn't used in concatenation.
+
+![](./illustrations/ownership-switch.png)
+
+Long "gaps" can unexpectedly change the source (owner) of the parts of the
+sequence coming before the first or after the second "hidden" end. The splice
+step must assume that these parts have a certain owner, in order to discard the
+correct parts. But since it clearly expects a certain owner, if we have tracked
+the owner of the edge parts, and it is not the expected owner, then we can
+update the "hidden" end so that this part is treated as part of the middle, and
+the new edge part is empty and with the expected owner.
+
+![](./illustrations/ownership-switch-corrected.png)
+
+Alternatively, just duplicate the pivot again (which I didn't do, oops).
+
+![](./illustrations/ownership-switch-corrected-2.png)
+
+### Avoiding memory copy (append) in implementation
+
+The naive way of collecting the result is to append the sequences (or flatten,
+which is a bit better when there are more than two sequences to append
+together). This, however, incurs a cost of copying memory, since each sequence
+(at least according to our definition) occupies a contiguous segment of RAM. It
+is also obviously not efficient to copy
+[overhangs](#all-edge-cases-are-base-cases) that have been skipped.
+
+From that latter observation, we might want to represent whole slices as a
+single thing. I'm calling that thing a *fragment*. Intuitively, we should
+change our return type to a sequence of fragments. However, this is still
+problematic in two ways: (1) the fragment sequence itself can grow, and (2)
+what if the "hidden" ends get caught in the middle of a fragment and become
+impossible to index?
+
+The second problem is a non-problem, because a "hidden" end comes from the end
+of an actual sequence, and thus must be at the end of a fragment.
+
+The first problem *is* a real problem. So what if we periodically combine the
+fragment sequences by reference, not copying memory, into larger sequences? But
+hang on, we don't want to deal with indeterminate *length* and *depth* at the
+same time, and recursive types can't be constructed from supplying a type
+parameter to a non-recursive generic type.
+
+I'll spoil it. Use a tree.
+
+![](./illustrations/datatype-frag.png)
+
+---
+
+![](./illustrations/frag-usage.png)
+
+---
+
+![](./illustrations/frag-concat.png)
+
+Side note: idk (as I'm currently taking the course) if CMU 15-210 will teach us
+not to use `Seq.flatten` to recursively flatten a tree into its inorder
+traversal. That's wasted memory copy. You should generate size hints at each
+level, preallocate a contiguous chunk of mutable memory (e.g. `'a option ref
+Seq.t` initialized to `NONE`), track offsets as you recursively and
+concurrently go down each chain in the tree, and write to the correct index in
+the destination memory once you're at a leaf.
+
+As a final note,
+
+### Somebody please help me with the analysis of work bounds.
