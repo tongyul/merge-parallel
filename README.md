@@ -257,15 +257,18 @@ into as many as $\lg \left\lvert r_{\rm H}\right\rvert$ slices. Compare that to
 an overlapping region $r_{\rm L}$, which can be split into as many as
 $\left\lvert r_{\rm L}\right\rvert$ slices. The total length of overlapping
 regions is bounded by the sum of lengths of input sequences, whereas the total
-length of overhanging regions ever generated is bounded by twice the sum of
-lengths, which is derived from an infinite sum of sum-of-lengths multiplied by
-decaying powers of 2 (to-do: elaborate), meaning the total number of slice-type
-fragment nodes ever generated is linear to input length. But since every leaf
-node in recursion generates at least one slice-type fragment node (unless both
-inputs are empty, which is an unreachable case if parent node (and thus
-initial) input isn't both empty), the number of leaves is linear to input
-length. And the depth of recursion is bounded by $\lg\left(\left\lvert
-s\right\rvert + \left\lvert t\right\rvert\right)$, so the total number of
-recursion nodes is bounded by length of input.
+length of overhanging regions ever generated is bounded by input length times
+1.5 to the power of recursion levels (leaf-level total input length), which
+evaluates to the 2.5th power of input length (this may not be exact but it
+should be polynomial relationship to input length). Taking the log of whatever
+that polynomial relationship is, we still get constant times log of input
+length. This means the total number of slice-type fragment nodes ever generated
+from overlap is linear to input length, and that from overhang is negligible.
+But since every leaf node in recursion generates at least one slice-type
+fragment node (unless both inputs are empty, which is an unreachable case if
+parent node (and thus initial) input isn't both empty), the number of leaves is
+linear to input length. And the depth of recursion is bounded by
+$\lg\left(\left\lvert s\right\rvert + \left\lvert t\right\rvert\right)$, so the
+total number of recursion nodes is bounded by length of input.
 
 Does this make sense? Did I solve it? I really want to know.
