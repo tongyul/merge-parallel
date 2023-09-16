@@ -120,10 +120,7 @@ very loose bound. (I don't have a proof yet for a better bound.)
 [How do I know where to split the
 chunks?](#how-do-i-know-where-to-split-the-chunks)
 
-(Literally press your browser back button to go back to what you were reading
-before hitting that internal link which brought you to this section.)
-
-### All edge cases are base cases
+### Edge cases and base cases
 
 What we have done in [Attempt 2](#attempt-2) and [Attempt 3](#attempt-3)
 assumes that the median of $s$ is between the min and max of $t$, and the
@@ -197,7 +194,7 @@ which is a bit better when there are more than two sequences to append
 together). This, however, incurs a cost of copying memory, since each sequence
 (at least according to our definition) occupies a contiguous segment of RAM. It
 is also obviously not efficient to copy
-[overhangs](#all-edge-cases-are-base-cases) that have been skipped.
+[overhangs](#edge-cases-and-base-cases) that have been skipped.
 
 From that latter observation, we might want to represent whole slices as a
 single thing. I'm calling that thing a *fragment*. Intuitively, we should
