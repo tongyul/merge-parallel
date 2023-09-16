@@ -15,11 +15,12 @@ Naturally, if we have two sequences, we might want to do something similar:
 ![](./illustrations/d-and-c-two-seq-naive.png)
 
 However, consider the sequences $\langle 1,3,4,8 \rangle$ and $\langle 2,5,6,7
-\rangle$; the above algorithm would tell us to $\def\seq #1{\left\langle #1
-\right\rangle}\def\tup #1{\left( #1 \right)}\def\Merge {\mathrm{merge}}
-\Merge\tup{\seq{1,3},\seq{2,5}}$ and $\Merge\tup{\seq{4,8},\seq{6,7}}$, then
-concatenate the result. We concatenate $\seq{1,2,3,5}$ to $\seq{4,6,7,8}$ and
-get $\seq{1,2,3,{\color{red}5},{\color{red}4},6,7,8}$.
+\rangle$; the above algorithm would tell us to $\mathrm{merge}\left(
+\left\langle 1,3\right\rangle,\left\langle 2,5\right\rangle\right)$ and
+$\mathrm{merge}\left( \left\langle 4,8\right\rangle,\left\langle
+6,7\right\rangle\right)$, then concatenate the result. We concatenate
+$\left\langle 1,2,3,5\right\rangle$ to $\left\langle 4,6,7,8\right\rangle$ and
+get $\left\langle 1,2,3,{\color{red}5},{\color{red}4},6,7,8\right\rangle$.
 
 In general, something like *this* may happen (in diagram, seq representations
 are aligned by value, not element number):
@@ -36,14 +37,14 @@ split the other sequence by *value* at the median we just computed.
 ![](./illustrations/d-and-c-clean-split.png)
 
 The problem with this approach is that it takes time to find the position of a
-*value* in a sorted sequence. To be exact, we can do this in $O(\lg\def\size
-#1{\left\lvert #1 \right\rvert} \size s)$ by using binary search, or in the
-same span if we prefer to partition the sequence directly with $\def\Filter
-{\mathrm{filter}} \Filter$ (albeit incurring $O(\size s)$ work). Since at each
-level of recursion we can alternatingly split on the medians of either
-sequences, ensuring that its size is cut in half, we can achieve logarithmic
-levels of recursion. But still, the overall span would be $O\tup{\lg^2
-\tup{\size s + \size t}}$.
+*value* in a sorted sequence. To be exact, we can do this in $O(\lg\left\lvert
+s\right\rvert)$ by using binary search, or in the same span if we prefer to
+partition the sequence directly with $\mathrm{filter}$ (albeit incurring
+$O(\left\lvert s\right\rvert)$ work). Since at each level of recursion we can
+alternatingly split on the medians of either sequences, ensuring that its size
+is cut in half, we can achieve logarithmic levels of recursion. But still, the
+overall span would be $O\left( \lg^2 \left( \left\lvert s\right\rvert +
+\left\lvert t\right\rvert\right)\right)$.
 
 ## Attempt 2: repair the middle afterwards
 
@@ -55,7 +56,7 @@ The problem is, how do we know this will end at all??
 
 (We also cannot directly check the length of the overlapping middle, because
 that will require looking up index by value, which is again binary search and
-alone creates a span of $O(\lg \size s)$.)
+alone creates a span of $O(\lg \left\lvert s\right\rvert)$.)
 
 Here's a clever observation: the length of the "middle" in the above blue
 sequence is upperbounded by the length of its left half; the length of the
@@ -67,12 +68,14 @@ half the size, then splice the result back into our answer.
 
 This gives the following recurrence for the span:
 $$
-\def\Span{\mathcal S}\def\Work{\mathcal W} \Span\tup{\size s,\size t} =
-2\Span\tup{\size s / 2,\size t / 2} + O(1)
+\mathcal S\left( \left\lvert s\right\rvert,\left\lvert t\right\rvert\right) =
+2\mathcal S\left( \left\lvert s\right\rvert / 2,\left\lvert t\right\rvert /
+2\right) + O(1)
 $$
-Unfortunately, this solves to $\Span\tup{\size s,\size t}=O\tup{\size s+\size
-t}$. However, this is a great start! We have eliminated the dependency on
-binary search.
+Unfortunately, this solves to $\mathcal S\left( \left\lvert
+s\right\rvert,\left\lvert t\right\rvert\right)=O\left( \left\lvert
+s\right\rvert+\left\lvert t\right\rvert\right)$. However, this is a great
+start! We have eliminated the dependency on binary search.
 
 ## Attempt 3: repair the middle as we go
 
@@ -86,20 +89,27 @@ left half of the blue sequence and the right half of the red sequence.
 
 This gives the following recurrence for span:
 $$
-\Span\tup{\size s,\size t} = \Span\tup{\size s / 2,\size t / 2} + O(1)
+\mathcal S\left( \left\lvert s\right\rvert,\left\lvert t\right\rvert\right) =
+\mathcal S\left( \left\lvert s\right\rvert / 2,\left\lvert t\right\rvert /
+2\right) + O(1)
 $$
-which solves to $\Span\tup{\size s,\size t}=O\tup{\lg\tup{\size s+\size t}}$.
+which solves to $\mathcal S\left( \left\lvert s\right\rvert,\left\lvert
+t\right\rvert\right)=O\left( \lg\left( \left\lvert s\right\rvert+\left\lvert
+t\right\rvert\right)\right)$.
 
 The remaining problem here is work, which is given by *this* recurrence
 instead:
 $$
-\Work\tup{\size s,\size t} = 3\Work\tup{\size s / 2,\size t / 2} + O(1)
+\mathcal W\left( \left\lvert s\right\rvert,\left\lvert t\right\rvert\right) =
+3\mathcal W\left( \left\lvert s\right\rvert / 2,\left\lvert t\right\rvert /
+2\right) + O(1)
 $$
-which solves to $\Work\tup{\size s,\size t}=O\tup{\tup{\size s+\size
-t}^{\lg3}}$. Ideally, we don't want to do more work than a linear merge. This
-is a real bummer. However, I can give you some intuitions as to why
-$O\tup{\tup{\ldots}^{\lg3}}$ should be a very loose bound. (I don't have a
-proof yet for a better bound.)
+which solves to $\mathcal W\left( \left\lvert s\right\rvert,\left\lvert
+t\right\rvert\right)=O\left( \left( \left\lvert s\right\rvert+\left\lvert
+t\right\rvert\right)^{\lg3}\right)$. Ideally, we don't want to do more work
+than a linear merge. This is a real bummer. However, I can give you some
+intuitions as to why $O\left( \left( \ldots\right)^{\lg3}\right)$ should be a
+very loose bound. (I don't have a proof yet for a better bound.)
 
 [How do I know where to split the
 chunks?](#how-do-i-know-where-to-split-the-chunks)
