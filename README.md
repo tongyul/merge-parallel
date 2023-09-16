@@ -114,7 +114,8 @@ which solves to $\mathcal W\left( \left\lvert s\right\rvert,\left\lvert
 t\right\rvert\right)=O\left( \left( \left\lvert s\right\rvert+\left\lvert
 t\right\rvert\right)^{\lg3}\right)$. Ideally, we don't want to do more work
 than a linear merge. This is a real bummer. However, I can give you some
-intuitions as to why $O\left( \left( \ldots\right)^{\lg3}\right)$ should be a
+[intuition](#somebody-please-help-me-with-the-analysis-of-work-bounds) as to
+why $O\left( \left( \ldots\right)^{\lg3}\right)$ should be a
 very loose bound. (I don't have a proof yet for a better bound.)
 
 [How do I know where to split the
@@ -235,3 +236,36 @@ the destination memory once you're at a leaf.
 As a final note,
 
 ### Somebody please help me with the analysis of work bounds.
+
+The following is only my intuition as to why the work should be much less than
+$O\left(\left(\ldots\right)^{\lg3}\right)$.
+
+First, a concrete example: does the median of the left half of blue lie on the
+left or the right of the pivot of red? Either way, there's an
+[overhang](#edge-cases-and-base-cases) that we can shave off.
+
+![](./illustrations/known-overhang.png)
+
+What if we deduce over more than two levels of recursion? (Unfortunately, that
+will be a very mentally taxing path to pursue, so I haven't tried it yet.)
+
+Thinking only in terms of the number of fragments ever generated, for either an
+overlapping region or an overhanging region; we notice that overhangs turn from
+input sequence into fragment only by shaving off an entire half of the input
+sequence. This means that each overhanging region $r_{\rm H}$ can only be split
+into as many as $\lg \left\lvert r_{\rm H}\right\rvert$ slices. Compare that to
+an overlapping region $r_{\rm L}$, which can be split into as many as
+$\left\lvert r_{\rm L}\right\rvert$ slices. The total length of overlapping
+regions is bounded by the sum of lengths of input sequences, whereas the total
+length of overhanging regions ever generated is bounded by twice the sum of
+lengths, which is derived from an infinite sum of sum-of-lengths multiplied by
+decaying powers of 2 (to-do: elaborate), meaning the total number of slice-type
+fragment nodes ever generated is linear to input length. But since every leaf
+node in recursion generates at least one slice-type fragment node (unless both
+inputs are empty, which is an unreachable case if parent node (and thus
+initial) input isn't both empty), the number of leaves is linear to input
+length. And the depth of recursion is bounded by $\lg\left(\left\lvert
+s\right\rvert + \left\lvert t\right\rvert\right)$, so the total number of
+recursion nodes is bounded by length of input.
+
+Does this make sense? Did I solve it? I really want to know.
