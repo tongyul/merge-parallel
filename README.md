@@ -67,11 +67,13 @@ half the size, then splice the result back into our answer.
 ![](./illustrations/d-and-c-with-repair-stage-smart.png)
 
 This gives the following recurrence for the span:
+
 $$
 \mathcal S\left( \left\lvert s\right\rvert,\left\lvert t\right\rvert\right) =
 2\mathcal S\left( \left\lvert s\right\rvert / 2,\left\lvert t\right\rvert /
 2\right) + O(1)
 $$
+
 Unfortunately, this solves to $\mathcal S\left( \left\lvert
 s\right\rvert,\left\lvert t\right\rvert\right)=O\left( \left\lvert
 s\right\rvert+\left\lvert t\right\rvert\right)$. However, this is a great
@@ -88,22 +90,26 @@ left half of the blue sequence and the right half of the red sequence.
 ![](./illustrations/d-and-c-with-parallel-repair-stage.png)
 
 This gives the following recurrence for span:
+
 $$
 \mathcal S\left( \left\lvert s\right\rvert,\left\lvert t\right\rvert\right) =
 \mathcal S\left( \left\lvert s\right\rvert / 2,\left\lvert t\right\rvert /
 2\right) + O(1)
 $$
+
 which solves to $\mathcal S\left( \left\lvert s\right\rvert,\left\lvert
 t\right\rvert\right)=O\left( \lg\left( \left\lvert s\right\rvert+\left\lvert
 t\right\rvert\right)\right)$.
 
 The remaining problem here is work, which is given by *this* recurrence
 instead:
+
 $$
 \mathcal W\left( \left\lvert s\right\rvert,\left\lvert t\right\rvert\right) =
 3\mathcal W\left( \left\lvert s\right\rvert / 2,\left\lvert t\right\rvert /
 2\right) + O(1)
 $$
+
 which solves to $\mathcal W\left( \left\lvert s\right\rvert,\left\lvert
 t\right\rvert\right)=O\left( \left( \left\lvert s\right\rvert+\left\lvert
 t\right\rvert\right)^{\lg3}\right)$. Ideally, we don't want to do more work
