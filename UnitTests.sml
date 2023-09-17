@@ -11,6 +11,8 @@ struct
   structure Mp : MERGE = MkMergePrl (structure Seq = Seq structure Ord = Ord val ts = Int.toString)
   structure Mp2 : MERGE = MkMergePrl2 (structure Seq = Seq structure Ord = Ord val ts = Int.toString)
   structure Mp3 : MERGE = MkMergePrl3 (structure Seq = Seq structure Ord = Ord val ts = Int.toString)
+  structure Mp3a : MERGE = MkMergePrl3a (structure Seq = Seq structure Ord = Ord val ts = Int.toString)
+  structure Mp3b : MERGE = MkMergePrl3b (structure Seq = Seq structure Ord = Ord val ts = Int.toString)
 
   fun seqEqual elEqual (s1, s2) =
     Seq.length s1 = Seq.length s2
@@ -96,6 +98,10 @@ struct
       testAll (op=, Int.toString, Mp2.merge) tests;
       print "Testing MergePrl3\n";
       testAll (op=, Int.toString, Mp3.merge) tests;
+      print "Testing MergePrl3a\n";
+      testAll (op=, Int.toString, Mp3a.merge) tests;
+      print "Testing MergePrl3b\n";
+      testAll (op=, Int.toString, Mp3b.merge) tests;
       ()
     )
 end

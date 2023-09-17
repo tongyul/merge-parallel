@@ -1,2 +1,2 @@
 version = 1
-workspace.root = "./project.cm"
+workspace.root = "*/project.cm"
